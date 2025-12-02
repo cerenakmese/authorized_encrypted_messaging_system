@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grup 34 - Güvenli Mesajlaşma</title>
+    <!-- Tasarım için Bootstrap (CDN) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+
+        .encrypted-text {
+            color: #dc3545;
+            font-family: monospace;
+            word-break: break-all;
+        }
+
+        .decrypted-text {
+            color: #198754;
+            font-weight: bold;
+        }
+
+        .card {
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container py-5">
+        <h2 class="text-center mb-4">🔐 Grup 34 - Secure Messaging System</h2>
+
+        <!-- Kimlik Seçimi (Simülasyon) -->
+        <div class="card p-3 mb-4 bg-dark text-white">
+            <div class="row align-items-center">
+                <div class="col-md-3">
+                    <label>Kullanıcı Adınız:</label>
+                    <input type="text" id="currentUser" class="form-control" value="Ziyaretçi">
+                </div>
+                <div class="col-md-3">
+                    <label>Sistemdeki Rolünüz:</label>
+                    <select id="currentRole" class="form-select">
+                        <option value="User">User (Yetkisiz)</option>
+                        <option value="Admin">Admin (Tam Yetkili)</option>
+                        <option value="Manager">Manager (Tam Yetkili)</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <small class="text-warning">
+                        * Not: 'User' rolü seçiliyken mesajların içeriğini şifreli görürsünüz.<br>
+                        * 'Admin' seçerseniz sistem şifreleri çözer.
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- SOL TARA: Mesaj Gönderme -->
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">Yeni Mesaj Gönder</div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label>Mesajınız:</label>
+                            <textarea id="msgInput" class="form-control" rows="3"></textarea>
+                        </div>
+                        <button onclick="sendMessage()" class="btn btn-primary w-100">🔒 Şifrele ve Gönder</button>
+                        <div id="statusMsg" class="mt-2 text-center text-muted"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SAĞ TARAF: Gelen Kutusu -->
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                        Gelen Kutusu (MongoDB Logs)
+                        <button onclick="loadMessages()" class="btn btn-sm btn-light">🔄 Yenile</button>
+                    </div>
+                    <div class="card-body">
+                        <div id="messageList" class="list-group">
+                            <!-- Mesajlar buraya gelecek -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Mesaj Gönderme Fonksiyonu
+        async function sendMessage() {
+            const username = document.getElementById('currentUser').value;
+            const role = document.getElementById('currentRole').value;
+            const message = document.getElementById('msgInput').value;
+
+            if (!message) return alert("Lütfen bir mesaj yazın!");
+
+            const response = await fetch('/send_message', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, role, message })
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                document.getElementById('statusMsg').innerText = "✅ " + result.info;
+                document.getElementById('msgInput').value = "";
+                loadMessages(); // Listeyi yenile
+            } else {
+                alert("Hata: " + result.error);
+            }
+        }
+
+        // Mesajları Listeleme Fonksiyonu
+        async function loadMessages() {
+            // Şu an seçili olan rolü backend'e gönderiyoruz
+            const currentRole = document.getElementById('currentRole').value;
+
+            const response = await fetch(`/get_messages?current_role=${currentRole}`);
+            const messages = await response.json();
+
+            const listDiv = document.getElementById('messageList');
+            listDiv.innerHTML = ""; // Temizle
+
+            messages.forEach(msg => {
+                const isEncrypted = msg.status === "encrypted";
+                const textClass = isEncrypted ? "encrypted-text" : "decrypted-text";
+                const icon = isEncrypted ? "🔒" : "🔓";
+
+                const html = `
+                <div class="list-group-item">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h6 class="mb-1 text-primary">${msg.sender} <span class="badge bg-secondary">${msg.role}</span></h6>
+                        <small class="text-muted">${msg.timestamp}</small>
+                    </div>
+                    <p class="mb-1 ${textClass}">${icon} ${msg.text}</p>
+                    <small class="text-muted">Algoritma: <strong>${msg.algo}</strong></small>
+                </div>
+            `;
+                listDiv.innerHTML += html;
+            });
+        }
+
+        // Sayfa açılınca mesajları yükle
+        loadMessages();
+
+        // Rol değişince listeyi otomatik yenile (Farkı görmek için)
+        document.getElementById('currentRole').addEventListener('change', loadMessages);
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>
