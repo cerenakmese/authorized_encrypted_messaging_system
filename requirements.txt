@@ -2,3 +2,4 @@ flask
 python-dotenv
 cryptography
 pymongo[srv]
+werkzeug
