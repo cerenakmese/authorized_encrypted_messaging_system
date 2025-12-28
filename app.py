@@ -1,66 +1,145 @@
-from flask import Flask, render_template, request, jsonify
-from deneme import MultiAlgoCrypto
+from flask import Flask, render_template, request, jsonify, session
+from encryption import MultiAlgoCrypto
 from db import DBManager
+from user import UserManager
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 app = Flask(__name__)
 
-# Yöneticileri başlatalım
+app.secret_key = os.getenv("SECRET_KEY","this the default key, change it!")  
+
 crypto = MultiAlgoCrypto()
 db = DBManager()
+user_manager = UserManager()
 
 @app.route('/')
 def index():
-    """Ana sayfa arayüzünü gösterir."""
-    return render_template('index.html')
+    user_in_session= session.get('username')
+    return render_template('index.html', user=user_in_session)
+
+@app.route('/api/register', methods=['POST']) 
+def register():
+    """Yeni kullanıcı kaydeder."""
+    data = request.json
+    username = data.get('username')
+    password = data.get('password')
+    role = data.get('role', 'User') 
+
+    if not username or not password:
+        return jsonify({"success": False, "error": "Kullanıcı adı ve şifre zorunludur!"})
+
+    success, message = user_manager.register_user(username, password, role)
+    return jsonify({"success": success, "message": message})
+
+@app.route('/api/login', methods=['POST'])
+def login():
+    """Kullanıcı girişi yapar ve SESSION başlatır."""
+    data = request.json
+    username = data.get('username')
+    password = data.get('password')
+
+    success, message, role = user_manager.login_user(username, password)
+
+    if success:
+        # OTURUM BAŞLATMA (En Önemli Kısım)
+        session['username'] = username
+        session['role'] = role
+        session['logged_in'] = True
+        return jsonify({"success": True, "message": message, "role": role})
+    else:
+        return jsonify({"success": False, "error": message})
+
+@app.route('/api/logout', methods=['POST'])
+def logout():
+    """Oturumu kapatır."""
+    session.clear()
+    return jsonify({"success": True, "message": "Çıkış yapıldı."})
+
+@app.route('/api/check_session', methods=['GET'])
+def check_session():
+    """Frontend'in kullanıcının hala içeride olup olmadığını anlaması için."""
+    if 'logged_in' in session:
+        return jsonify({"logged_in": True, "username": session['username'], "role": session['role']})
+    else:
+        return jsonify({"logged_in": False})
+
 
 @app.route('/send_message', methods=['POST'])
 def send_message():
-    """Kullanıcıdan gelen mesajı şifreler ve DB'ye kaydeder."""
+    
+    if 'logged_in' not in session:
+        return jsonify({
+            "success": False,
+            "error": "Önce giriş yapmalısınız!"
+        }), 401
+
+    
     data = request.json
-    username = data.get('username')
-    role = data.get('role')
-    message = data.get('message')
+    message_text = data.get('message')
+    allowed_roles = data.get('allowed_roles')
 
-    if not message:
-        return jsonify({"success": False, "error": "Mesaj boş olamaz!"})
+    
+    if not message_text:
+        return jsonify({
+            "success": False,
+            "error": "Mesaj boş olamaz!"
+        })
 
-    # 1. Şifreleme Yöneticisi Rastgele Bir Algoritma Seçip Şifreler
-    encrypted_package = crypto.encrypt_message(message)
+    if not allowed_roles or not isinstance(allowed_roles, list):
+        return jsonify({
+            "success": False,
+            "error": "En az bir rol seçilmelidir!"
+        })
 
-    # 2. Veritabanı Yöneticisi Bunu Kaydeder
-    success = db.save_message(username, role, encrypted_package)
+    
+    username = session['username']
+    role = session['role']
+
+    
+    encrypted_package = crypto.encrypt_message(message_text)
+
+    
+    success = db.save_message(
+        username,
+        role,
+        encrypted_package,
+        allowed_roles  
+    )
 
     if success:
-        return jsonify({"success": True, "info": f"Mesaj {encrypted_package['algo']} ile şifrelendi."})
+        return jsonify({
+            "success": True,
+            "info": f"Mesaj {encrypted_package['algo']} ile şifrelendi."
+        })
     else:
-        return jsonify({"success": False, "error": "Veritabanı hatası!"})
+        return jsonify({
+            "success": False,
+            "error": "Veritabanı hatası!"
+        })
+
 
 @app.route('/get_messages', methods=['GET'])
 def get_messages():
-    """
-    Mesajları listeler.
-    Secure Coding Notu: Burada 'Access Control' (Yetki Kontrolü) simülasyonu yapıyoruz.
-    Eğer 'current_user_role' parametresi 'Admin' değilse şifreyi çözmüyoruz.
-    """
-    # Arayüzden o anki kullanıcının rolünü alalım (Simülasyon)
-    current_role = request.args.get('current_role', 'User')
+    
+    current_role = session.get('role','User')
     
     raw_messages = db.get_all_messages()
     processed_messages = []
 
     for msg in raw_messages:
-        # Mesaj verisi
+       
         encrypted_content = msg['content']
+        allowed_roles = msg.get('allowed_roles', [])
         
-        # --- YETKİ KONTROLÜ (ACCESS CONTROL) ---
-        # Sadece 'Admin' veya 'Manager' rolündekiler şifreyi çözülmüş görebilir.
-        # Diğerleri sadece şifreli (anlamsız) metni görür.
-        if current_role in ['Admin', 'Manager']:
+        if current_role in  allowed_roles:
             decrypted_text = crypto.decrypt_message(encrypted_content)
-            display_text = decrypted_text # Açık hali
+            display_text = decrypted_text 
             status = "decrypted"
         else:
-            display_text = encrypted_content['ciphertext'] # Şifreli hali
+            display_text = encrypted_content['ciphertext'] 
             status = "encrypted"
 
         processed_messages.append({
