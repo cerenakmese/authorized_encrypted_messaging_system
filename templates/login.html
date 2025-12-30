@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giriş - SecureChat</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="auth-body">
+    <div id="toast-container"></div>
+
+    <div class="container auth-container">
+        <div class="form-box">
+            <h2 id="formTitle">Giriş Yap</h2>
+            
+            <div id="authAlert" class="alert-box error" style="display: none;"></div>
+
+            <form id="loginForm">
+                <div class="input-group">
+                    <i class="fas fa-user"></i>
+                    <input type="text" id="loginUsername" placeholder="Kullanıcı Adı" required>
+                </div>
+                <div class="input-group">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" id="loginPassword" placeholder="Şifre" required>
+                </div>
+                <button type="submit" class="btn-primary">Giriş Yap</button>
+                <p class="switch-text">Hesabın yok mu? <span onclick="toggleAuth('register')">Kayıt Ol</span></p>
+            </form>
+
+            <form id="registerForm" style="display: none;">
+                <div class="input-group">
+                    <i class="fas fa-user"></i>
+                    <input type="text" id="regUsername" placeholder="Yeni Kullanıcı Adı" required>
+                </div>
+                <div class="input-group">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" id="regPassword" placeholder="Yeni Şifre" required>
+                </div>
+                <div class="input-group">
+                    <i class="fas fa-user-tag"></i>
+                    <select id="regRole">
+                        <option value="User">Standart Kullanıcı</option>
+                        <option value="Admin">Yönetici (Admin)</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-secondary">Kayıt Ol</button>
+                <p class="switch-text">Zaten üye misin? <span onclick="toggleAuth('login')">Giriş Yap</span></p>
+            </form>
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - SecureChat</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div id="toast-container"></div>
+
+    <div class="app-layout">
+        <aside class="sidebar admin-sidebar-theme">
+            <div class="logo"><i class="fas fa-user-shield"></i> YÖNETİCİ</div>
+            <nav>
+                <a href="/dashboard" class="nav-btn"><i class="fas fa-arrow-left"></i> Mesajlara Dön</a>
+                <a href="/admin" class="nav-btn active"><i class="fas fa-table"></i> Sistem Logları</a>
+            </nav>
+            <div class="user-profile">
+                <span id="displayUsername">Admin</span>
+                <button onclick="logout()" class="btn-logout"><i class="fas fa-sign-out-alt"></i></button>
+            </div>
+        </aside>
+
+        <main class="content-area">
+            <h3><i class="fas fa-database"></i> Tüm İşlem Kayıtları</h3>
+            <div class="table-responsive">
+                <table class="log-table">
+                    <thead>
+                        <tr>
+                            <th>Zaman</th>
+                            <th>Kullanıcı</th>
+                            <th>Rol</th>
+                            <th>Algoritma</th>
+                            <th>Durum</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminLogTableBody">
+                        </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            checkSessionAndRedirect('admin'); // Admin değilse 403'e atar
+            renderAdminLogs();
+        });
+    </script>
+</body>
+</html>
