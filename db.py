@@ -25,7 +25,7 @@ class DBManager:
             print("[HATA] MongoDB'ye bağlanılamadı! İnternet bağlantınızı veya URI adresini kontrol edin.")
             self.client = None
 
-    def save_message(self, username, user_role, encrypted_package):
+    def save_message(self, username, user_role, encrypted_package, allowed_roles):
 
         if not self.client:
             print("[HATA] Veritabanı bağlantısı yok, kayıt yapılamadı.")
@@ -34,6 +34,7 @@ class DBManager:
         document = {
             "sender": username,
             "role": user_role,
+            "allowed_roles": allowed_roles,
             "timestamp": datetime.datetime.now(), 
             "content": encrypted_package 
         }

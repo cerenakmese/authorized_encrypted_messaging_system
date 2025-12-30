@@ -20,7 +20,7 @@ def index():
     user_in_session= session.get('username')
     return render_template('index.html', user=user_in_session)
 
-@app.route('/api/register', methods=['POST'])
+@app.route('/api/register', methods=['POST']) 
 def register():
     """Yeni kullanıcı kaydeder."""
     data = request.json
@@ -69,33 +69,57 @@ def check_session():
 
 @app.route('/send_message', methods=['POST'])
 def send_message():
-    """
-    SADECE GİRİŞ YAPMIŞ kullanıcılar mesaj atabilir.
-    Kullanıcı bilgisi artık 'request'ten değil, güvenli 'session'dan alınır.
-    """
+    # 1️⃣ Giriş kontrolü
     if 'logged_in' not in session:
-        return jsonify({"success": False, "error": "Önce giriş yapmalısınız!"}), 401
+        return jsonify({
+            "success": False,
+            "error": "Önce giriş yapmalısınız!"
+        }), 401
 
+    # 2️⃣ Frontend'den gelen veri
     data = request.json
     message_text = data.get('message')
+    allowed_roles = data.get('allowed_roles')
 
+    # 3️⃣ Validasyonlar
     if not message_text:
-        return jsonify({"success": False, "error": "Mesaj boş olamaz!"})
+        return jsonify({
+            "success": False,
+            "error": "Mesaj boş olamaz!"
+        })
 
-    # Oturumdaki bilgiler (İsim buradan alınıyor, bu yüzden 'null' olmaz)
+    if not allowed_roles or not isinstance(allowed_roles, list):
+        return jsonify({
+            "success": False,
+            "error": "En az bir rol seçilmelidir!"
+        })
+
+    # 4️⃣ Session'dan güvenli bilgiler
     username = session['username']
     role = session['role']
 
-    # 1. Şifrele
+    # 5️⃣ Mesajı şifrele
     encrypted_package = crypto.encrypt_message(message_text)
 
-    # 2. Kaydet
-    success = db.save_message(username, role, encrypted_package)
+    # 6️⃣ Veritabanına kaydet (allowed_roles ŞİMDİLİK geçici)
+    success = db.save_message(
+        username,
+        role,
+        encrypted_package,
+        allowed_roles  # 👈 yeni eklenen parametre
+    )
 
     if success:
-        return jsonify({"success": True, "info": f"Mesaj {encrypted_package['algo']} ile şifrelendi."})
+        return jsonify({
+            "success": True,
+            "info": f"Mesaj {encrypted_package['algo']} ile şifrelendi."
+        })
     else:
-        return jsonify({"success": False, "error": "Veritabanı hatası!"})
+        return jsonify({
+            "success": False,
+            "error": "Veritabanı hatası!"
+        })
+
 
 @app.route('/get_messages', methods=['GET'])
 def get_messages():
@@ -108,8 +132,9 @@ def get_messages():
     for msg in raw_messages:
        
         encrypted_content = msg['content']
+        allowed_roles = msg.get('allowed_roles', [])
         
-        if current_role in ['Admin', 'Manager']:
+        if current_role in  allowed_roles:
             decrypted_text = crypto.decrypt_message(encrypted_content)
             display_text = decrypted_text 
             status = "decrypted"

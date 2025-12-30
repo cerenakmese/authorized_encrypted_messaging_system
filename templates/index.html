@@ -99,6 +99,22 @@
                         <div class="card-body">
                             <textarea id="msgInput" class="form-control mb-3" rows="3"
                                 placeholder="Güvenli mesajını yaz..."></textarea>
+                            <div class="mb-2">
+                              <label class="form-label fw-bold">Kimler şifresiz görebilir?</label>
+                                <div class="form-check">
+                                  <input class="form-check-input" type="checkbox" value="Admin" id="roleAdmin">
+                                   <label class="form-check-label" for="roleAdmin">Admin</label>
+                                </div>
+                                <div class="form-check">
+                                  <input class="form-check-input" type="checkbox" value="Manager" id="roleManager">
+                                  <label class="form-check-label" for="roleManager">Manager</label>
+                                </div>
+                                 <div class="form-check">
+                                  <input class="form-check-input" type="checkbox" value="User" id="roleUser">
+                                <label class="form-check-label" for="roleUser">User</label>
+                                </div>
+                            </div>
+
                             <button onclick="sendMessage()" class="btn btn-dark w-100">🔒 Şifrele ve Gönder</button>
                             <div id="sendMsgStatus" class="mt-2 text-center text-muted small"></div>
                         </div>
@@ -200,22 +216,51 @@
         }
 
         async function sendMessage() {
-            const msg = document.getElementById('msgInput').value;
-            if (!msg) return;
+          const msg = document.getElementById('msgInput').value;
 
-            const res = await fetch('/send_message', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: msg })
-            });
-            const data = await res.json();
+          if (!msg) {
+            alert("Mesaj boş olamaz!");
+            return;
+          }
 
-            if (data.success) {
-                document.getElementById('sendMsgStatus').innerText = "✅ Gönderildi (" + data.info + ")";
-                document.getElementById('msgInput').value = "";
-                loadMessages();
+          // Checkbox'lardan roller
+          const roles = [];
+
+          if (document.getElementById('roleAdmin').checked) {
+            roles.push("Admin");
+         }
+
+          if (document.getElementById('roleManager').checked) {
+                 roles.push("Manager");
+            }
+
+           if (document.getElementById('roleUser').checked) {
+                roles.push("User");
+            }
+
+           if (roles.length === 0) {
+             alert("En az bir rol seçmelisin!");
+             return;
+            }
+
+            const response = await fetch('/send_message', {
+            method: 'POST',
+            headers: {
+            'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              message: msg,
+               allowed_roles: roles
+            })
+           });
+
+           const data = await response.json();
+
+           if (data.success) {
+             document.getElementById('msgInput').value = "";
+             loadMessages();
             } else {
-                alert(data.error);
+              alert(data.error);
             }
         }
 
