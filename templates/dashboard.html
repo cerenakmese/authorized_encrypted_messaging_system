@@ -2,8 +2,7 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - SecureChat</title>
+    <title>Panel - SecureChat</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
@@ -15,35 +14,48 @@
             <div class="logo"><i class="fas fa-shield-alt"></i> SecureChat</div>
             <nav>
                 <a href="/dashboard" class="nav-btn active"><i class="fas fa-comments"></i> Mesajlar</a>
-                <a href="/admin" class="nav-btn" id="adminNavBtn" style="display: none;"><i class="fas fa-table"></i> Admin Paneli</a>
+                <a href="/admin" class="nav-btn" id="adminNavBtn" style="display: none;"><i class="fas fa-user-shield"></i> Admin Paneli</a>
             </nav>
             <div class="user-profile">
-                <span id="displayUsername">...</span>
+                <span id="displayUsername" style="font-size: 0.9em; color: #888;">...</span>
                 <button onclick="logout()" class="btn-logout"><i class="fas fa-sign-out-alt"></i></button>
             </div>
         </aside>
 
         <main class="content-area">
             <section class="message-composer">
-                <h3><i class="fas fa-pen-nib"></i> Güvenli Mesaj Gönder</h3>
+                <h3 style="color: white;"><i class="fas fa-pen-nib"></i> Güvenli Mesaj</h3>
+
                 <div class="composer-box">
                     <div class="input-wrapper">
                         <i class="fas fa-lock lock-icon"></i>
-                        <textarea id="messageInput" placeholder="Gizli mesajını buraya yaz..."></textarea>
+                        <textarea id="messageInput" class="terminal-input" placeholder="> Gizli mesajınızı buraya yazın..."></textarea>
                     </div>
-                    <button id="sendBtn" onclick="sendMessage()"><i class="fas fa-paper-plane"></i> Şifrele ve Gönder</button>
+
+                    <div class="role-selector mt-3" style="margin-top: 15px; color: #ccc;">
+                        <label style="margin-right: 10px; font-weight: bold;">Kimler Görebilir?:</label>
+                        <div style="display: inline-block;">
+                            <input type="checkbox" id="roleAdmin" value="Admin" checked> <label for="roleAdmin">Admin</label>
+                            <input type="checkbox" id="roleManager" value="Manager" style="margin-left: 10px;"> <label for="roleManager">Manager</label>
+                            <input type="checkbox" id="roleUser" value="User" style="margin-left: 10px;"> <label for="roleUser">User</label>
+                        </div>
+                    </div>
+
+                    <button id="sendBtn" class="btn-primary" style="margin-top:15px;" onclick="sendMessage()">
+                        <i class="fas fa-paper-plane"></i> Şifrele ve Gönder
+                    </button>
                 </div>
             </section>
 
             <section class="feed">
-                <h3>Gelen Kutusu</h3>
+                <h3 style="color: #888; border-bottom: 1px solid #333; padding-bottom: 10px;">Gelen Kutusu</h3>
                 <div id="messagesList" class="messages-list"></div>
             </section>
         </main>
     </div>
+
     <script src="{{ url_for('static', filename='script.js') }}"></script>
     <script>
-        // Sayfa yüklendiğinde oturum kontrolü ve mesajları çek
         document.addEventListener('DOMContentLoaded', () => {
             checkSessionAndRedirect('dashboard');
             setInterval(fetchMessages, 3000);
