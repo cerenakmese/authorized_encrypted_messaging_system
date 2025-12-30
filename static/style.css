@@ -1,0 +1,68 @@
+:root {
+    --bg: #0f0f13;
+    --panel: #1b1b22;
+    --primary: #00ff88;
+    --error: #ff4d4d;
+    --text: #e0e0e0;
+    --muted: #888;
+}
+body { background-color: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; }
+* { box-sizing: border-box; }
+a { text-decoration: none; color: inherit; }
+
+/* AUTH SAYFASI */
+.auth-body { display: flex; justify-content: center; align-items: center; width: 100%; }
+.container { width: 100%; display: flex; justify-content: center; align-items: center; height: 100%; }
+.form-box { background: var(--panel); padding: 40px; border-radius: 8px; width: 350px; box-shadow: 0 0 20px rgba(0,255,136,0.1); text-align: center; border: 1px solid #333; }
+.input-group { position: relative; margin-bottom: 15px; }
+.input-group input, .input-group select { width: 100%; padding: 12px 12px 12px 40px; background: #2a2a35; border: 1px solid #444; color: white; border-radius: 4px; outline: none; }
+.input-group i { position: absolute; left: 12px; top: 14px; color: #888; }
+.btn-primary, .btn-secondary { width: 100%; padding: 12px; border: none; font-weight: bold; cursor: pointer; border-radius: 4px; margin-top: 10px; }
+.btn-primary { background: var(--primary); color: #000; }
+.btn-secondary { background: #444; color: white; }
+.switch-text { margin-top: 15px; font-size: 0.9em; color: var(--muted); }
+.switch-text span { color: var(--primary); cursor: pointer; text-decoration: underline; }
+
+/* APP LAYOUT */
+.app-layout { display: flex; width: 100%; height: 100%; }
+.sidebar { width: 250px; background: var(--panel); display: flex; flex-direction: column; padding: 20px; border-right: 1px solid #333; }
+.admin-sidebar-theme { border-right: 1px solid var(--error); } /* Admin farkı */
+.logo { font-size: 1.2em; font-weight: bold; color: var(--primary); margin-bottom: 30px; }
+.nav-btn { display: flex; align-items: center; gap: 10px; padding: 15px; color: #888; transition: 0.3s; }
+.nav-btn.active, .nav-btn:hover { color: var(--primary); background: rgba(0,255,136,0.1); border-radius: 8px; }
+.user-profile { margin-top: auto; padding-top: 20px; border-top: 1px solid #333; display: flex; justify-content: space-between; }
+.btn-logout { background: var(--error); border: none; color: white; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
+.content-area { flex: 1; padding: 40px; overflow-y: auto; }
+
+/* MESAJ ALANI */
+.message-composer { background: var(--panel); padding: 20px; border-radius: 8px; margin-bottom: 30px; border: 1px solid #333; }
+.input-wrapper { position: relative; margin-bottom: 15px; }
+.lock-icon { position: absolute; right: 15px; top: 15px; color: var(--primary); opacity: 0.5; }
+textarea { width: 100%; height: 100px; background: #111; color: var(--primary); border: 1px solid #444; padding: 15px; font-family: 'Courier New', monospace; resize: none; outline: none; }
+
+/* MESAJ KARTLARI & GÖZ İKONU */
+.message-card { background: var(--panel); padding: 15px; margin-bottom: 15px; border-radius: 5px; border-left: 3px solid #666; }
+.message-card.encrypted { border-left-color: var(--error); }
+.message-card.decrypted { border-left-color: var(--primary); }
+.msg-content { font-family: 'Courier New', monospace; font-size: 1.1em; display: flex; align-items: center; gap: 10px; word-break: break-all; margin-top: 5px; }
+.toggle-decrypt { cursor: pointer; color: var(--muted); transition: 0.3s; padding: 5px; }
+.toggle-decrypt:hover { color: var(--primary); transform: scale(1.2); }
+.status-icon.fa-lock { color: var(--error); }
+.status-icon.fa-lock-open { color: var(--primary); }
+.algo-tag { background: #333; padding: 2px 6px; border-radius: 4px; color: var(--primary); font-size: 0.7em; }
+
+/* ADMIN TABLE */
+.log-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+.log-table th { background: #222; color: var(--primary); padding: 12px; text-align: left; }
+.log-table td { padding: 12px; border-bottom: 1px solid #333; color: #ccc; }
+.table-responsive { overflow-x: auto; }
+
+/* TOAST */
+#toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
+.toast { background: #222; color: white; padding: 15px 25px; margin-bottom: 10px; border-left: 5px solid var(--primary); border-radius: 4px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); animation: slideIn 0.5s, fadeOut 0.5s 2.5s forwards; }
+@keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+@keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+
+/* ALERT BOX */
+.alert-box { padding: 10px; margin-bottom: 15px; border-radius: 4px; font-size: 0.9em; }
+.alert-box.error { background: rgba(255, 77, 77, 0.2); border: 1px solid var(--error); color: var(--error); }
