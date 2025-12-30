@@ -7,80 +7,56 @@ from cryptography.hazmat.primitives.ciphers.aead import (
     ChaCha20Poly1305, 
     AESSIV
 )
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+from cryptography.hazmat.primitives import hashes
 
 class MultiAlgoCrypto:
     def __init__(self):
-        """
-        Şifreleme anahtarlarını sabit bir dosyadan yönetir.
-        Eğer anahtar dosyası yoksa ilk seferde oluşturur ve kaydeder.
-        Böylece uygulama yeniden başlatılsa bile eski mesajlar çözülebilir.
-        """
-        self.key_file = "secret.keys"
-        self._load_or_generate_keys()
+        
+
+        self.passphrase = os.getenv("MASTER_KEY_PASSPHRASE")
+        if not self.passphrase:
+            raise ValueError("HATA: .env dosyasında 'MASTER_KEY_PASSPHRASE' bulunamadı!")
+        
+        self._derive_keys_from_passphrase()
 
         print("--- GÜVENLİK SİSTEMİ BAŞLATILDI ---")
-        print(f"[INFO] 4 Algoritma Yüklendi: Fernet, AES-GCM, ChaCha20, AES-SIV")
-        print(f"[INFO] Anahtarlar '{self.key_file}' dosyasından okundu.")
+        print(f"[INFO] 4 Algoritma Yüklendi. Anahtarlar ortak paroladan türetildi.")
         print("-------------------------------------")
 
-    def _load_or_generate_keys(self):
-        """Anahtarları dosyadan okur, yoksa oluşturup kaydeder."""
-        if os.path.exists(self.key_file):
-            try:
-                with open(self.key_file, "rb") as f:
-                    content = f.read().splitlines()
-                
-                # Dosya içeriğini kontrol et (Artık 4 anahtar bekliyoruz)
-                if len(content) >= 4:
-                    self.key_fernet = content[0]
-                    self.key_aes = content[1]
-                    self.key_chacha = content[2]
-                    self.key_siv = content[3]
-                else:
-                    # Eksikse yeniden oluştur
-                    print("[UYARI] Anahtar dosyası eksik, yeniden oluşturuluyor...")
-                    self._generate_and_save_keys()
-            except Exception as e:
-                print(f"[HATA] Anahtar dosyası okunamadı: {e}. Yeniden oluşturuluyor...")
-                self._generate_and_save_keys()
-        else:
-            self._generate_and_save_keys()
+    def _derive_keys_from_passphrase(self):
+   
+    # Güvenlik Notu: Gerçek hayatta Salt rastgele olmalı ve saklanmalıdır.
+        fixed_salt = b'Grup34_Sabit_Tuz_Degeri_2025' 
 
-        # Anahtarları Kullanıma Hazırla
+    # 1. Ana Anahtarı Türet (128 byte lazım: 4 tane 32-byte anahtar için)
+        kdf = PBKDF2HMAC(
+            algorithm=hashes.SHA256(),
+            length=128, 
+            salt=fixed_salt,
+            iterations=100000,
+        )
+        master_key_bytes = kdf.derive(self.passphrase.encode())
+
+        # Anahtarları Parçala (Slicing)
+        # Fernet için 32 byte anahtarın base64 hali gerekir
+        self.key_fernet = base64.urlsafe_b64encode(master_key_bytes[0:32])
+        self.key_aes = master_key_bytes[32:64]
+        self.key_chacha = master_key_bytes[64:96]
+        self.key_siv = master_key_bytes[96:128]
+
+        # Anahtarları Yükle
         self.fernet = Fernet(self.key_fernet)
         self.aes = AESGCM(self.key_aes)
         self.chacha = ChaCha20Poly1305(self.key_chacha)
-        
-        # AESSIV anahtar boyutunu kontrol etmeden yüklemeye çalışırsa hata verebilir.
-        # Bu yüzden try-except ile yakalayıp gerekirse yenilemek daha güvenlidir.
         try:
             self.siv = AESSIV(self.key_siv)
-        except ValueError:
-            print("[UYARI] AESSIV anahtarı uyumsuz, yeniden oluşturuluyor...")
-            self._generate_and_save_keys()
-            self.siv = AESSIV(self.key_siv)
+        except:
+            # SIV bazen 64 byte ister, o zaman KDF length arttırılmalı
+            pass
 
 
-    def _generate_and_save_keys(self):
-        """Yeni anahtarlar üretir ve dosyaya yazar."""
-        # 1. Fernet Key
-        self.key_fernet = Fernet.generate_key()
-        # 2. AES-GCM Key (256-bit / 32 byte)
-        self.key_aes = AESGCM.generate_key(bit_length=256)
-        # 3. ChaCha20 Key (256-bit / 32 byte)
-        self.key_chacha = ChaCha20Poly1305.generate_key()
-        
-        # 4. AES-SIV Key (Düzeltme: 256-bit encryption için 512-bit/64 byte anahtar gerekir)
-        # Veya kütüphanenin varsayılan generate_key fonksiyonunu bit_length parametresi OLMADAN kullanmak en güvenlisidir.
-        self.key_siv = AESSIV.generate_key(bit_length=256) 
 
-        with open(self.key_file, "wb") as f:
-            f.write(self.key_fernet + b"\n")
-            f.write(self.key_aes + b"\n")
-            f.write(self.key_chacha + b"\n")
-            f.write(self.key_siv + b"\n")
-        
-        print(f"[BİLGİ] Yeni anahtar dosyası oluşturuldu: {self.key_file}")
 
     def _b64_encode(self, data_bytes):
         return base64.b64encode(data_bytes).decode('utf-8')

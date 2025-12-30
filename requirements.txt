@@ -3,3 +3,5 @@ python-dotenv
 cryptography
 pymongo[srv]
 werkzeug
+Flask-Limiter
+bleach

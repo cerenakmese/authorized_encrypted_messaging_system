@@ -100,18 +100,18 @@
                             <textarea id="msgInput" class="form-control mb-3" rows="3"
                                 placeholder="Güvenli mesajını yaz..."></textarea>
                             <div class="mb-2">
-                              <label class="form-label fw-bold">Kimler şifresiz görebilir?</label>
+                                <label class="form-label fw-bold">Kimler şifresiz görebilir?</label>
                                 <div class="form-check">
-                                  <input class="form-check-input" type="checkbox" value="Admin" id="roleAdmin">
-                                   <label class="form-check-label" for="roleAdmin">Admin</label>
+                                    <input class="form-check-input" type="checkbox" value="Admin" id="roleAdmin">
+                                    <label class="form-check-label" for="roleAdmin">Admin</label>
                                 </div>
                                 <div class="form-check">
-                                  <input class="form-check-input" type="checkbox" value="Manager" id="roleManager">
-                                  <label class="form-check-label" for="roleManager">Manager</label>
+                                    <input class="form-check-input" type="checkbox" value="Manager" id="roleManager">
+                                    <label class="form-check-label" for="roleManager">Manager</label>
                                 </div>
-                                 <div class="form-check">
-                                  <input class="form-check-input" type="checkbox" value="User" id="roleUser">
-                                <label class="form-check-label" for="roleUser">User</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="User" id="roleUser">
+                                    <label class="form-check-label" for="roleUser">User</label>
                                 </div>
                             </div>
 
@@ -200,7 +200,7 @@
         }
 
         async function checkSession() {
-            const res = await fetch('/api/check_session');
+            const res = await fetch('/api/check_session?t=' + new Date().getTime());
             const data = await res.json();
 
             if (data.logged_in) {
@@ -216,51 +216,51 @@
         }
 
         async function sendMessage() {
-          const msg = document.getElementById('msgInput').value;
+            const msg = document.getElementById('msgInput').value;
 
-          if (!msg) {
-            alert("Mesaj boş olamaz!");
-            return;
-          }
-
-          // Checkbox'lardan roller
-          const roles = [];
-
-          if (document.getElementById('roleAdmin').checked) {
-            roles.push("Admin");
-         }
-
-          if (document.getElementById('roleManager').checked) {
-                 roles.push("Manager");
+            if (!msg) {
+                alert("Mesaj boş olamaz!");
+                return;
             }
 
-           if (document.getElementById('roleUser').checked) {
+            // Checkbox'lardan roller
+            const roles = [];
+
+            if (document.getElementById('roleAdmin').checked) {
+                roles.push("Admin");
+            }
+
+            if (document.getElementById('roleManager').checked) {
+                roles.push("Manager");
+            }
+
+            if (document.getElementById('roleUser').checked) {
                 roles.push("User");
             }
 
-           if (roles.length === 0) {
-             alert("En az bir rol seçmelisin!");
-             return;
+            if (roles.length === 0) {
+                alert("En az bir rol seçmelisin!");
+                return;
             }
 
             const response = await fetch('/send_message', {
-            method: 'POST',
-            headers: {
-            'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              message: msg,
-               allowed_roles: roles
-            })
-           });
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    message: msg,
+                    allowed_roles: roles
+                })
+            });
 
-           const data = await response.json();
+            const data = await response.json();
 
-           if (data.success) {
-             document.getElementById('msgInput').value = "";
-             loadMessages();
+            if (data.success) {
+                document.getElementById('msgInput').value = "";
+                loadMessages();
             } else {
-              alert(data.error);
+                alert(data.error);
             }
         }
 
